@@ -5,6 +5,8 @@
 @media print {
   body * {
     visibility: hidden;
+    margin: 0 !important;
+    padding: 0 !important;
   }
   
   .print-section, .print-section * {
@@ -16,9 +18,19 @@
     left: 0;
     top: 0;
     width: 100%;
+    padding: 0 !important;
+    margin: 0 !important;
   }
 
   .label {
     break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Remove any background colors when printing */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    background-color: transparent !important;
   }
 }
