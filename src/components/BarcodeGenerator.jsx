@@ -24,7 +24,7 @@ const BarcodeGenerator = ({ onGenerate }) => {
           displayValue: true
         });
         
-        resolve(canvas.toDataURL('image/png'));
+        resolve({ value, image: canvas.toDataURL('image/png') });
       } catch (error) {
         console.error('Error generating barcode:', error);
         resolve(null);
@@ -43,18 +43,21 @@ const BarcodeGenerator = ({ onGenerate }) => {
       return;
     }
 
+    const barcodes = [];
     // Generate all barcodes in the range
     for (let i = start; i <= end; i++) {
       const paddedNumber = i.toString().padStart(padding, '0');
       const value = `${prefix}${paddedNumber}${suffix}`;
-      const barcodeImage = await generateSingleBarcode(value);
-      if (barcodeImage) {
-        onGenerate({ value, image: barcodeImage });
+      const barcode = await generateSingleBarcode(value);
+      if (barcode) {
+        barcodes.push(barcode);
       }
       // Small delay to prevent browser from hanging
       await new Promise(resolve => setTimeout(resolve, 50));
     }
     
+    // Send all barcodes at once
+    onGenerate(barcodes);
     setGenerating(false);
   };
 
@@ -62,9 +65,9 @@ const BarcodeGenerator = ({ onGenerate }) => {
     if (isRange) {
       await generateBarcodeRange();
     } else {
-      const barcodeImage = await generateSingleBarcode(barcodeValue);
-      if (barcodeImage) {
-        onGenerate({ value: barcodeValue, image: barcodeImage });
+      const barcode = await generateSingleBarcode(barcodeValue);
+      if (barcode) {
+        onGenerate([barcode]);  // Send as array for consistency
         setBarcodeValue('');
       }
     }
