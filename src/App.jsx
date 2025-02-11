@@ -7,7 +7,13 @@ function App() {
   const [selectedTemplate, setSelectedTemplate] = useState('5160');
 
   const handleBarcodeGenerate = (barcode) => {
-    setBarcodes([...barcodes, barcode]);
+    if (Array.isArray(barcode)) {
+      // If receiving multiple barcodes
+      setBarcodes(prevBarcodes => [...prevBarcodes, ...barcode]);
+    } else {
+      // If receiving a single barcode
+      setBarcodes(prevBarcodes => [...prevBarcodes, barcode]);
+    }
   };
 
   const handlePrint = () => {
@@ -40,19 +46,25 @@ function App() {
           <BarcodeGenerator onGenerate={handleBarcodeGenerate} />
         </div>
 
-        <div className="flex justify-between">
-          <button
-            onClick={handleClear}
-            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-          >
-            Clear All
-          </button>
-          <button
-            onClick={handlePrint}
-            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-          >
-            Print Labels
-          </button>
+        <div className="flex justify-between items-center">
+          <div className="text-sm text-gray-600">
+            {barcodes.length} barcode(s) generated
+          </div>
+          <div className="space-x-4">
+            <button
+              onClick={handleClear}
+              className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+            >
+              Clear All
+            </button>
+            <button
+              onClick={handlePrint}
+              disabled={barcodes.length === 0}
+              className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 disabled:bg-green-300 disabled:cursor-not-allowed"
+            >
+              Print Labels
+            </button>
+          </div>
         </div>
 
         <div className="print-section bg-white p-4 rounded-lg shadow-sm">
