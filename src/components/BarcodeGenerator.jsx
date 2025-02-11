@@ -10,48 +10,59 @@ const BarcodeGenerator = ({ onGenerate }) => {
   const [prefix, setPrefix] = useState('');
   const [suffix, setSuffix] = useState('');
   const [padding, setPadding] = useState(0);
+  const [generating, setGenerating] = useState(false);
   const canvasRef = useRef(null);
 
   const generateSingleBarcode = (value) => {
-    try {
-      JsBarcode(canvasRef.current, value, {
-        format: barcodeFormat,
-        width: 2,
-        height: 100,
-        displayValue: true
-      });
-      
-      return canvasRef.current.toDataURL('image/png');
-    } catch (error) {
-      console.error('Error generating barcode:', error);
-      return null;
-    }
+    return new Promise((resolve) => {
+      try {
+        const canvas = document.createElement('canvas');
+        JsBarcode(canvas, value, {
+          format: barcodeFormat,
+          width: 2,
+          height: 100,
+          displayValue: true
+        });
+        
+        resolve(canvas.toDataURL('image/png'));
+      } catch (error) {
+        console.error('Error generating barcode:', error);
+        resolve(null);
+      }
+    });
   };
 
-  const generateBarcodeRange = () => {
+  const generateBarcodeRange = async () => {
+    setGenerating(true);
     const start = parseInt(rangeStart);
     const end = parseInt(rangeEnd);
     
     if (isNaN(start) || isNaN(end) || start > end) {
       alert('Please enter valid range values');
+      setGenerating(false);
       return;
     }
 
+    // Generate all barcodes in the range
     for (let i = start; i <= end; i++) {
       const paddedNumber = i.toString().padStart(padding, '0');
       const value = `${prefix}${paddedNumber}${suffix}`;
-      const barcodeImage = generateSingleBarcode(value);
+      const barcodeImage = await generateSingleBarcode(value);
       if (barcodeImage) {
         onGenerate({ value, image: barcodeImage });
       }
+      // Small delay to prevent browser from hanging
+      await new Promise(resolve => setTimeout(resolve, 50));
     }
+    
+    setGenerating(false);
   };
 
-  const generateBarcode = () => {
+  const generateBarcode = async () => {
     if (isRange) {
-      generateBarcodeRange();
+      await generateBarcodeRange();
     } else {
-      const barcodeImage = generateSingleBarcode(barcodeValue);
+      const barcodeImage = await generateSingleBarcode(barcodeValue);
       if (barcodeImage) {
         onGenerate({ value: barcodeValue, image: barcodeImage });
         setBarcodeValue('');
@@ -163,13 +174,11 @@ const BarcodeGenerator = ({ onGenerate }) => {
 
       <button
         onClick={generateBarcode}
-        disabled={(!isRange && !barcodeValue.trim()) || (isRange && (!rangeStart || !rangeEnd))}
+        disabled={generating || (!isRange && !barcodeValue.trim()) || (isRange && (!rangeStart || !rangeEnd))}
         className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:bg-blue-300 disabled:cursor-not-allowed"
       >
-        Generate {isRange ? 'Barcodes' : 'Barcode'}
+        {generating ? 'Generating...' : `Generate ${isRange ? 'Barcodes' : 'Barcode'}`}
       </button>
-
-      <canvas ref={canvasRef} className="hidden" />
     </div>
   );
 };
